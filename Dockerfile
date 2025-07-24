@@ -6,13 +6,13 @@ USER root
 # Instalar nodos adicionales
 RUN npm install --prefix /home/node/.n8n \
     n8n-nodes-telegram-polling \
-    n8n-nodes-base
+    n8n-nodes-base \
+    @qdrant/qdrant-js \
+    csv2xlsx
 
 # Instalar pandoc usando apk (Alpine package manager)
 RUN apk update && \
     apk add pandoc
-
-RUN npm install -g @qdrant/qdrant-js
 
 # Asegurarse de volver al usuario correcto
 USER node

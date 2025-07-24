@@ -11,7 +11,7 @@ services:
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=jesus
       - N8N_BASIC_AUTH_PASSWORD=airtrace
-      - NODE_FUNCTION_ALLOW_EXTERNAL=@qdrant/qdrant-js,axios,fetch
+      - NODE_FUNCTION_ALLOW_EXTERNAL=@qdrant/qdrant-js,axios,fetch,csv2xlsx
       - TZ=Europe/Madrid
     networks:
       iot_network:
@@ -53,9 +53,9 @@ networks:
     name: flowguard-compose_iot_network  # Usa el nombre de la red que ya existe
 
 
-#docker-compose up -d
+#docker-compose up --build
 #docker exec -it ollama ollama pull mistral:instruct
 #docker exec -it ollama ollama pull nomic-embed-text
-#docker-compose up --build
 #docker-compose down
+#docker-compose up
 
