@@ -1,0 +1,47 @@
+services:
+  n8n:
+    build: .
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./n8n_data:/home/node/.n8n
+      - ./documentos:/data/documentos
+      - ./tmp:/data/tmp
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=jesus
+      - N8N_BASIC_AUTH_PASSWORD=airtrace
+      - NODE_FUNCTION_ALLOW_EXTERNAL=@qdrant/qdrant-js,axios,fetch,csv2xlsx
+      - TZ=Europe/Madrid
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama_data:/root/.ollama
+    container_name: ollama
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant
+    hostname: qdrant
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - 6333:6333
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+
+volumes:
+  n8n_data:
+  ollama_data:
+  qdrant_storage:
+
+
+#docker-compose up --build
+#docker exec -it ollama ollama pull mistral:instruct
+#docker exec -it ollama ollama pull nomic-embed-text
+#docker-compose down
+#docker-compose up
+
