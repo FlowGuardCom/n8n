@@ -12,7 +12,11 @@ RUN npm install --prefix /home/node/.n8n \
 
 # Instalar pandoc usando apk (Alpine package manager)
 RUN apk update && \
-    apk add pandoc
+    apk add --no-cache pandoc curl unzip groff less python3 py3-pip
+
+# Instalar AWS CLI v1 con override de seguridad
+RUN pip3 install awscli --upgrade --break-system-packages
+
 
 # Asegurarse de volver al usuario correcto
 USER node

@@ -8,26 +8,31 @@ services:
       - ./documentos:/data/documentos
       - ./tmp:/data/tmp
     environment:
+      - N8N_SECURE_COOKIE=false
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=jesus
       - N8N_BASIC_AUTH_PASSWORD=airtrace
       - NODE_FUNCTION_ALLOW_EXTERNAL=@qdrant/qdrant-js,axios,fetch,csv2xlsx
       - TZ=Europe/Madrid
-    networks:
-      iot_network:
-        ipv4_address: 172.25.0.5
 
   ollama:
     image: ollama/ollama:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - "11434:11434"
     volumes:
       - ./ollama_data:/root/.ollama
     container_name: ollama
     restart: unless-stopped
-    networks:
-      iot_network:
-        ipv4_address: 172.25.0.6
 
   qdrant:
     image: qdrant/qdrant
@@ -38,19 +43,11 @@ services:
       - 6333:6333
     volumes:
       - ./qdrant_storage:/qdrant/storage
-    networks:
-      iot_network:
-        ipv4_address: 172.25.0.7
 
 volumes:
   n8n_data:
   ollama_data:
   qdrant_storage:
-
-networks:
-  iot_network:
-    external: true                       # Esto le dice a Docker que la red ya existe
-    name: flowguard-compose_iot_network  # Usa el nombre de la red que ya existe
 
 
 #docker-compose up --build
