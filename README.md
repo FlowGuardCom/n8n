@@ -25,6 +25,13 @@ Este proyecto despliega un entorno completo de **automatización (n8n)**, **embe
     sudo nvidia-ctk runtime configure --runtime=docker
     sudo systemctl restart docker
 ```
+6. **Red y puertos**:
+Por defecto, el `docker-compose.yml` expone estos servicios en el host:
+| Servicio | Puerto host | Descripción                       |
+|----------|-------------|-----------------------------------|
+| n8n      | 5678        | Panel web de n8n                  |
+| Ollama   | 11434       | API REST para modelos LLM/embeds  |
+| Qdrant   | 6333        | API REST/gRPC de la vector DB     |
    
 ## 📦 Clonar el proyecto
 Clonar proyecto n8n en GitHub
