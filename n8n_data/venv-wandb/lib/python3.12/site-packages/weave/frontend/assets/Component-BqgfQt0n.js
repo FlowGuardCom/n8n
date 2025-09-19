@@ -1,0 +1,2 @@
+import{af as r,u as a,R as e,ag as s}from"./index-DVp1b9Fj.js";const i=l=>{const o=r({file:l.input}),n=a(o);if(n.loading)return e.createElement("div",null);const t=n.result;if(t==null)throw new Error("PanelFileMarkdown: content is null");return e.createElement("div",{style:{height:"100%",overflow:"scroll"}},e.createElement("div",{style:{background:"white",border:"1px solid #eee",padding:16}},e.createElement(s,{condensed:!1,content:t})))};export{i as default};
+//# sourceMappingURL=Component-BqgfQt0n.js.map

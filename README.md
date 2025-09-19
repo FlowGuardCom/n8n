@@ -7,7 +7,7 @@ Este proyecto despliega un entorno completo de **automatización (n8n)**, **embe
 ## 📋 Requisitos de la máquina
 
 1. **Sistema operativo**: Ubuntu 22.04 LTS (o equivalente).
-2. **Usuario con sudo** y acceso SSH.
+2. **Usuario con acceso SSH (y sudo si fuera posible).**
 3. **Paquetes básicos**:
 ```bash
    sudo apt update && sudo apt upgrade -y
@@ -76,11 +76,31 @@ Los flujos y credenciales de n8n están en n8n_data/database.sqlite.
 ```
 
 ## 🔐 Conexión SSH a la máquina
-Una vez desplegado:
 ```bash
     ssh -i ~/.ssh/clave.pem ubuntu@IP_PUBLICA
 ```
 
+## Subida de documentos al sistema RAG
+Una vez desplegado, entrar en la siguiente url (se encuentra en el flujo "RAG System", en el nodo trigger "Upload file"):
+```bash
+    http://3.77.214.209:5678/form/233e6641-8e83-4409-a108-602ab471b569
+```
+
+Credenciales:
+- usuario: airtrace
+- contraseña: airtrace
+
+## Consulta a sistema RAG
+Es necesario tener activo el flujo "Agente Consulta RAG" y en él, tener activado el nodo "webhook"
+y desactivado el "When chat message received". La url de laa consulta es la siguiente:
+```bash
+    http://localhost:5678/webhook-test/consulta-rag
+```
+
+Ejemplo de consulta:
+```bash
+    http://localhost:5678/webhook-test/consulta-rag
+```
 
 
 

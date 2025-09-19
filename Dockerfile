@@ -17,6 +17,14 @@ RUN apk update && \
 # Instalar AWS CLI v1 con override de seguridad
 RUN pip3 install awscli --upgrade --break-system-packages
 
+# Instalar W&B 
+RUN pip3 install --no-cache-dir wandb --break-system-packages
+
+# Weave (para EvaluationLogger)
+RUN pip3 install --no-cache-dir weave --break-system-packages
+
+# (Opcional) que Python no bufee logs
+ENV PYTHONUNBUFFERED=1
 
 # Asegurarse de volver al usuario correcto
 USER node

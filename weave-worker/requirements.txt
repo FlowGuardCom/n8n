@@ -1,0 +1,26 @@
+# requirements.txt (weave-worker)
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# Weave + W&B
+weave==0.50.7
+wandb==0.17.7
+
+# Evita la firma nueva que rompe:
+gql==3.4.1
+graphql-core==3.2.3
+
+# (opcionales pero frecuentes en weave)
+numpy<2
+pyarrow>=14
+rich>=13.7.0
+python-json-logger>=2.0.4
+tiktoken>=0.4.0
+emoji>=2.12.1
+janus>=1.0.0
+aiofiles>=22.1.0
+aioprocessing>=2.0.1
+analytics-python>=1.2.9
+Werkzeug>=3.0.3
+requests>=2.31
+typing-extensions>=4.7
