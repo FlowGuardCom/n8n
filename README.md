@@ -99,7 +99,12 @@ y desactivado el "When chat message received". La url de laa consulta es la sigu
 
 Ejemplo de consulta:
 ```bash
-    http://localhost:5678/webhook-test/consulta-rag
+    curl -X POST http://3.77.214.209:5678/webhook/consulta-rag \
+      -H "Content-Type: application/json" \
+      -d '{
+        "query": "Dime las características de la variedad siroco 12.",
+        "collection": "SIROCO12"
+      }'
 ```
 
 
