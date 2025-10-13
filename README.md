@@ -68,6 +68,8 @@ Los flujos y credenciales de n8n están en n8n_data/database.sqlite.
     scp -i ~/.ssh/clave.pem <PATH>/database_YYYY-MM-DD.sqlite.gz user@IP_DESTINO:/home/ec2-user/
 ```
 2. Restaurar en la máquina destino
+Primero hay que ejecutar en la máquina original (donde se encuentran los flujos actualizados) el flujo
+"[UTILS] Save n8n backup in S3 bucket", para que se guarde una copia en el bucket de S3 "n8n-backup-airtrace".
 ```bash
     mv /home/user/database_YYYY-MM-DD.sqlite.gz ./n8n_data/
     gunzip ./n8n_data/database_YYYY-MM-DD.sqlite.gz

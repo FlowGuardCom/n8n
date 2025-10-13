@@ -1,0 +1,28 @@
+# Conexión:
+ssh -i "C:\Users\Jesús Pardo Álvarez\Desktop\SSH n8n\n8n_server_flowguard.pem" ubuntu@3.77.214.209
+
+# EC2 Instance location
+Europa (Fráncfort)
+
+# Consulta Curl
+curl -X POST http://3.77.214.209:5678/webhook/consulta-rag \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Dame una tabla de la evolución de la temperatura superficial del agua durante 2024",
+    "collection": "CANALMARMENOR"
+  }'
+
+curl -X POST http://3.77.214.209:5678/webhook/consulta-rag \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Dime las características de la variedad siroco 12.",
+    "collection": "SIROCO12"
+  }'
+
+curl -X POST http://3.77.214.209:5678/webhook/consulta-tb-rag \
+  -H "Content-Type: application/json" \
+  -d '{
+  "query" : "Dime cual es el estado del decantador D2."
+  }'
+
+
