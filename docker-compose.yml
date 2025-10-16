@@ -6,6 +6,7 @@ services:
     volumes:
       - ./n8n_data:/home/node/.n8n
       - ./documentos:/data/documentos
+      - ./documents:/data/documents
       - ./tmp:/data/
     environment:
       - N8N_SECURE_COOKIE=false
@@ -147,8 +148,8 @@ services:
     volumes:
       - ./documents:/app/documents
       - ./.env:/app/.env
-    # ⬇️ sin uv:
-    command: [ "python", "-m", "ingestion.ingest", "--documents", "/app/documents" ]
+    command: [ "uvicorn", "ingestion.api:app", "--host", "0.0.0.0", "--port", "8001" ]
+    restart: unless-stopped
 
 
   weave-worker:
@@ -173,17 +174,6 @@ services:
       - 6333:6333
     volumes:
       - ./qdrant_storage:/qdrant/storage
-
-  unstructured:
-    image: quay.io/unstructured-io/unstructured-api:latest
-    container_name: unstructured
-    ports:
-      - "8000:8000"
-    environment:
-      UNSTRUCTURED_API_CFG_FAST: "true"     # reduce descarga de modelos a demanda
-    volumes:
-      - ./unstructured_cache:/home/unstructured
-    restart: unless-stopped
 
 volumes:
   n8n_data:
