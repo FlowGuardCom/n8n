@@ -1,2 +1,0 @@
-{"__type":"$$EventMessageAudit","id":"fd4da371-c63d-4c78-a782-4818c95184e0","ts":"2025-10-13T05:34:49.076-04:00","eventName":"n8n.audit.user.login.success","message":"n8n.audit.user.login.success","payload":{"userId":"f55a37bb-3c2c-4b89-a9ee-cfc1ed810595","_email":"jesus.pardo@airtrace.io","_firstName":"Jesus","_lastName":"Pardo Alvarez","globalRole":"global:owner","authenticationMethod":"email"}}
-{"__type":"$$EventMessageConfirm","confirm":"fd4da371-c63d-4c78-a782-4818c95184e0","ts":"2025-10-13T05:34:49.080-04:00","source":{"id":"0","name":"eventBus"}}
