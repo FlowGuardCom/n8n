@@ -1,0 +1,58 @@
+[
+  {
+    "parameters": {
+      "triggerTimes": [
+        {
+          "mode": "everyX",
+          "value": 6,
+          "unit": "hours"
+        }
+      ],
+      "timezone": "Europe/Madrid"
+    },
+    "id": "1",
+    "name": "Trigger - Cada 6h",
+    "type": "n8n-nodes-base.cron",
+    "typeVersion": 1,
+    "position": [200, 300]
+  },
+  {
+    "parameters": {
+      "command": "DATE=$(date +\"%Y-%m-%d_%H-%M-%S\") && OUTFILE=\"/tmp/database_${DATE}.sqlite.gz\" && gzip -c /data/n8n_data/database.sqlite > \"$OUTFILE\" && echo \"$OUTFILE\""
+    },
+    "id": "2",
+    "name": "Comprimir database.sqlite",
+    "type": "n8n-nodes-base.executeCommand",
+    "typeVersion": 1,
+    "position": [450, 300]
+  },
+  {
+    "parameters": {
+      "operation": "upload",
+      "bucketName": "tu-bucket-s3-aqui",
+      "fileName": "={{ 'n8n-backups/database_' + new Date().toISOString().replace(/[:.]/g, '-') + '.sqlite.gz' }}",
+      "filePath": "={{ $json[\"stdout\"].trim() }}"
+    },
+    "id": "3",
+    "name": "Subir a S3",
+    "type": "n8n-nodes-base.amazonS3",
+    "typeVersion": 2,
+    "position": [700, 300],
+    "credentials": {
+      "amazonS3": {
+        "id": "__IAM_ROLE__",
+        "name": "IAM Role"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "command": "rm -f /tmp/database_*.sqlite.gz"
+    },
+    "id": "4",
+    "name": "Borrar archivo temporal",
+    "type": "n8n-nodes-base.executeCommand",
+    "typeVersion": 1,
+    "position": [950, 300]
+  }
+]

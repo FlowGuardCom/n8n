@@ -6,28 +6,163 @@ services:
     volumes:
       - ./n8n_data:/home/node/.n8n
       - ./documentos:/data/documentos
-      - ./tmp:/data/tmp
+      - ./tmp:/data/
     environment:
+      - N8N_SECURE_COOKIE=false
       - N8N_BASIC_AUTH_ACTIVE=true
       - N8N_BASIC_AUTH_USER=jesus
       - N8N_BASIC_AUTH_PASSWORD=airtrace
-      - NODE_FUNCTION_ALLOW_EXTERNAL=@qdrant/qdrant-js,axios,fetch,csv2xlsx
+      # Permitir libs en Code node (sin qdrant, sin fetch)
+      - NODE_FUNCTION_ALLOW_EXTERNAL=axios,csv2xlsx,pg,pg-format
       - TZ=Europe/Madrid
-    networks:
-      iot_network:
-        ipv4_address: 172.25.0.5
+      # Conexión a Postgres para el Code node
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGDATABASE=postgres
+      - PGUSER=raguser
+      - PGPASSWORD=ragpass123
+      # URL de Ollama para el Code node
+      - OLLAMA_URL=http://ollama:11434
+    depends_on:
+      - ollama
+      - postgres
 
   ollama:
     image: ollama/ollama:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
     ports:
       - "11434:11434"
     volumes:
       - ./ollama_data:/root/.ollama
     container_name: ollama
     restart: unless-stopped
-    networks:
-      iot_network:
-        ipv4_address: 172.25.0.6
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: rag_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: raguser
+      POSTGRES_PASSWORD: ragpass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgvector_data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U raguser -d postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+    depends_on:
+      - postgres
+
+  rag-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile-rag
+    container_name: rag_voice_agent
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://raguser:ragpass123@postgres:5432/postgres
+      OLLAMA_URL: http://ollama:11434
+      LLM_PROVIDER: ollama
+      CHAT_MODEL: llama3.1
+      EMBED_MODEL: nomic-embed-text
+      OPENAI_API_KEY: ""#${OPENAI_API_KEY}
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+      DEEPGRAM_API_KEY: ${DEEPGRAM_API_KEY}
+      USE_HYBRID_CHUNKER: "0"
+      DOCLING_DISABLE_OCR: "0"
+      DOCLING_PICTURE_DESCRIPTIONS: "vlm"
+      DOCLING_PICTURE_DESCRIPTION_OPTIONS__SCALE: "page"
+      DOCLING_PICTURE_DESCRIPTION_OPTIONS__PROMPT: "brief-captions"
+      DOCLING_PICTURE_DESCRIPTION_API_OPTIONS__TYPE: "api"
+      DOCLING_PDF_PIPELINE_OPTIONS__ENABLE_REMOTE_SERVICES: "true"
+      DOCLING_PICTURE_AREA_THRESHOLD: "0.1"
+      DOCLING_VLM_API_URL: "http://ollama:11434/v1/chat/completions"
+      DOCLING_VLM_API_PROVIDER: ollama
+      DOCLING_VLM_API_MODEL: "llava:7b"
+      DOCLING_OCR_OPTIONS__LANG: "['fr','de','es','en']"
+      LOG_LEVEL: INFO
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./documents:/app/documents
+      - ./.env:/app/.env
+    command: [ "python", "cli.py" ]
+    restart: unless-stopped
+
+  ingestion:
+    build:
+      context: .
+      dockerfile: Dockerfile-rag
+    container_name: rag_ingestion
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://raguser:ragpass123@postgres:5432/postgres
+      OLLAMA_URL: http://ollama:11434
+      LLM_PROVIDER: ollama
+      EMBED_MODEL: nomic-embed-text
+      CHAT_MODEL: llama3.1
+      USE_HYBRID_CHUNKER: "0"
+      DOCLING_DISABLE_OCR: "0"
+      DOCLING_PICTURE_DESCRIPTIONS: "vlm"
+      DOCLING_PICTURE_DESCRIPTION_OPTIONS__SCALE: "page"
+      DOCLING_PICTURE_DESCRIPTION_OPTIONS__PROMPT: "brief-captions"
+      DOCLING_PICTURE_DESCRIPTION_API_OPTIONS__TYPE: "api"
+      DOCLING_PDF_PIPELINE_OPTIONS__ENABLE_REMOTE_SERVICES: "true"
+      DOCLING_PICTURE_AREA_THRESHOLD: "0.1"
+      DOCLING_VLM_API_PROVIDER: ollama
+      DOCLING_VLM_API_MODEL: "llava:7b"
+      DOCLING_OCR_OPTIONS__LANG: "['fr','de','es','en']"
+    volumes:
+      - ./documents:/app/documents
+      - ./.env:/app/.env
+    # ⬇️ sin uv:
+    command: [ "python", "-m", "ingestion.ingest", "--documents", "/app/documents" ]
+
+
+  weave-worker:
+    build:
+      context: ./weave-worker
+      dockerfile: Dockerfile
+    image: weave-worker:v1
+    container_name: weave-worker
+    environment:
+      - WEAVE_WANDB_KEY=${WEAVE_WANDB_KEY}
+      - WEAVE_PROJECT=${WEAVE_PROJECT}
+    ports:
+      - "7000:7000"
+    restart: unless-stopped
 
   qdrant:
     image: qdrant/qdrant
@@ -38,24 +173,34 @@ services:
       - 6333:6333
     volumes:
       - ./qdrant_storage:/qdrant/storage
-    networks:
-      iot_network:
-        ipv4_address: 172.25.0.7
+
+  unstructured:
+    image: quay.io/unstructured-io/unstructured-api:latest
+    container_name: unstructured
+    ports:
+      - "8000:8000"
+    environment:
+      UNSTRUCTURED_API_CFG_FAST: "true"     # reduce descarga de modelos a demanda
+    volumes:
+      - ./unstructured_cache:/home/unstructured
+    restart: unless-stopped
 
 volumes:
   n8n_data:
   ollama_data:
+  pgvector_data:
   qdrant_storage:
 
-networks:
-  iot_network:
-    external: true                       # Esto le dice a Docker que la red ya existe
-    name: flowguard-compose_iot_network  # Usa el nombre de la red que ya existe
 
 
 #docker-compose up --build
+#sudo docker compose up --build
 #docker exec -it ollama ollama pull mistral:instruct
 #docker exec -it ollama ollama pull nomic-embed-text
 #docker-compose down
+#sudo docker compose down --remove-orphans
 #docker-compose up
+
+#sudo docker compose build --no-cache ingestion rag-agent weave-worker
+#sudo docker compose run --rm ingestion
 

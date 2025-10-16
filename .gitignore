@@ -1,5 +1,14 @@
-ollama_data
-documentos
-tmp
+ollama_data/
+documentos/
+tmp/
+n8n_data/
+pgvector_data/
+qdrant_storage/
+unstructured_cache/
+docling_cache/
+documents/
 
 n8n_data/database.sqlite
+n8n_data.tar.gz
+weave-logger/.env
+.env

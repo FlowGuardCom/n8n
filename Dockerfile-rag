@@ -1,0 +1,91 @@
+# Dockerfile específicamente para el RAG Agent con Docling completo (CPU)
+FROM python:3.11-slim
+
+# --- Paquetes de sistema necesarios (opencv, magic, etc.) ---
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    build-essential \
+    gcc \
+    postgresql-client \
+    libpq-dev \
+    libmagic1 \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# --- Dependencias Python ---
+RUN python -m pip install --no-cache-dir -i https://pypi.org/simple \
+      python-dotenv>=1.0.0 \
+      aiohttp>=3.9.0 \
+      pydantic-ai>=0.7.4 \
+      asyncpg>=0.30.0 \
+      numpy>=2.0.2 \
+      requests \
+      httpx \
+      pydantic \
+      psycopg2-binary \
+      python-multipart \
+      uvicorn \
+      fastapi \
+      beautifulsoup4 \
+      lxml \
+      pdfminer.six \
+      transformers==4.49.0 \
+      tokenizers \
+      huggingface-hub>=0.25.0 \
+      safetensors>=0.4.5 \
+      accelerate \
+      sentencepiece \
+      Pillow \
+      pypdf \
+      python-magic
+
+# Torch/TV CPU desde el índice oficial de PyTorch
+RUN python -m pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
+      torch==2.3.0+cpu torchvision==0.18.0+cpu
+
+# OCR / visión + Docling (con dependencias completas)
+RUN python -m pip install --no-cache-dir -i https://pypi.org/simple \
+      easyocr \
+      opencv-python-headless \
+      docling==2.55.1 \
+      pypdfium2 \
+      filetype
+
+# Comprobación de dependencias en build (útil para fallar rápido)
+RUN python - <<'PY'
+import importlib, sys
+mods = ['transformers','tokenizers','docling','docling.document_converter','pypdfium2','filetype','easyocr','cv2','torch','torchvision']
+failed = []
+for m in mods:
+    try:
+        importlib.import_module(m)
+    except Exception as e:
+        failed.append((m, repr(e)))
+print('Import check:', 'OK' if not failed else failed)
+assert not failed, f"Fallo importando: {failed}"
+PY
+
+# Copiar el código
+COPY . .
+
+# Puedes activar OCR ahora si quieres; quita el disable.
+# Si NO deseas OCR, vuelve a poner DOCLING_DISABLE_OCR=1
+ENV DOCLING_DISABLE_OCR=0 \
+    DOCLING_PICTURE_DESCRIPTIONS=api \
+    DOCLING_VLM_API_PROVIDER=ollama \
+    DOCLING_VLM_API_URL=http://ollama:11434 \
+    DOCLING_VLM_API_MODEL=llava:7b \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Healthcheck básico
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import asyncpg; import sys; sys.exit(0)"
+
+CMD ["python", "rag_agent.py"]

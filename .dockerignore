@@ -1,4 +1,15 @@
-ollama_data
-documentos
-tmp
+ollama_data/
+documentos/
+tmp/
+n8n_data/
+pgvector_data/
+qdrant_storage/
+unstructured_cache/
+docling_cache/
+documents/
 
+# Docker & OS
+*.log
+.DS_Store
+.git/
+.gitignore

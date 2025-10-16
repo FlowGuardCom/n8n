@@ -12,7 +12,19 @@ RUN npm install --prefix /home/node/.n8n \
 
 # Instalar pandoc usando apk (Alpine package manager)
 RUN apk update && \
-    apk add pandoc
+    apk add --no-cache pandoc curl unzip groff less python3 py3-pip
+
+# Instalar AWS CLI v1 con override de seguridad
+RUN pip3 install awscli --upgrade --break-system-packages
+
+# Instalar W&B 
+RUN pip3 install --no-cache-dir wandb --break-system-packages
+
+# Weave (para EvaluationLogger)
+RUN pip3 install --no-cache-dir weave --break-system-packages
+
+# (Opcional) que Python no bufee logs
+ENV PYTHONUNBUFFERED=1
 
 # Asegurarse de volver al usuario correcto
 USER node
